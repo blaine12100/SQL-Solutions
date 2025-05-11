@@ -133,3 +133,25 @@ select sc.customer_id, sc.order_date, menu.product_name from second_cte as sc jo
 
 select customer_id, count(*), sum(amount) as fa from base_cte group by customer_id
 */        
+
+--Q9
+/*
+Use Q1 output and tweak it
+select customer_id, sum(case when menu.product_name = 'sushi' then menu.price * 20 else menu.price * 10 end) as point_sum from sales join menu on sales.product_id = menu.product_id group by customer_id
+*/
+
+--Q10
+/*
+select sales.customer_id, sum(case when sales.order_date >= members.join_date and sales.order_date <= members.join_date + INTERVAL '7 days' then menu.price * 20 
+                              when menu.product_id = 1 then menu.price * 20 
+                              else menu.price * 10
+                              end) as point_sum from sales join menu on sales.product_id = menu.product_id join members on sales.customer_id = members.customer_id where sales.order_date between '2021-01-01' and '2021-01-31' group by sales.customer_id 
+*/
+
+/*For the bonus question, the solution was there but not all so had to see the actual answer:
+
+With base_cte as (select sales.customer_id, sales.order_date, menu.product_name, menu.price, case when sales.order_date >= members.join_date then 'Y' else 'N' end as member from sales join menu on sales.product_id = menu.product_id join members on sales.customer_id = members.customer_id)
+
+select customer_id, order_date, product_name, price, member, case when member = 'N' then null else dense_rank() over (partition by customer_id, member order by order_date) end as rank from base_cte
+
+*/
