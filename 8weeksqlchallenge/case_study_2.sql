@@ -253,3 +253,49 @@ where ro.cancellation = 'N/A' -- non cancelled order
 group by co.order_id
 order by count(*) desc limit 1
 */
+
+-- For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+
+/*
+select co.customer_id, sum(case when co.extras is not null or co.exclusions is not null then 1 else 0 end) as atleast_1_change, sum(case when co.extras is NULL and co.exclusions is NULL then 1 else 0 end) as no_change from runner_orders as ro left join customer_orders as co on ro.order_id = co.order_id
+where ro.cancellation = 'N/A'
+group by co.customer_id
+*/
+
+-- How many pizzas were delivered that had both exclusions and extras?
+
+/*
+select sum(case when co.extras is not null and co.exclusions is not null then 1 else 0 end) as atleast_1_change from runner_orders as ro left join customer_orders as co on ro.order_id = co.order_id
+where ro.cancellation = 'N/A'
+*/
+
+-- What was the total volume of pizzas ordered for each hour of the day?
+
+/*
+select DATE(order_time) as days, extract(hour from order_time) as times, count(*) from customer_orders group by DATE(order_time), extract(hour from order_time)
+order by days, times
+*/
+
+-- What was the volume of orders for each day of the week?
+
+/*
+select DATE(order_time) as days, count(*) from customer_orders group by days
+order by days
+*/
+
+----------------------------------------------------------------------------
+
+-- Runners and customer experience questions
+
+-- How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+
+/*
+select MOD(CAST (extract('week' from registration_date) AS NUMERIC), 53) as weeks, count (*) from runners group by MOD(CAST (extract('week' from registration_date) AS NUMERIC), 53)
+order by weeks
+*/
+
+-- What was the average distance travelled for each customer?
+
+/*
+select co.customer_id, ROUND(sum(ro.distance) / count(co.customer_id), 2) as avg_distance from runner_orders as ro left join customer_orders as co on ro.order_id = co.order_id where ro.cancellation = 'N/A' group by co.customer_id
+/*
