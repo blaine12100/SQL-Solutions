@@ -299,3 +299,73 @@ order by weeks
 /*
 select co.customer_id, ROUND(sum(ro.distance) / count(co.customer_id), 2) as avg_distance from runner_orders as ro left join customer_orders as co on ro.order_id = co.order_id where ro.cancellation = 'N/A' group by co.customer_id
 /*
+
+-- What was the difference between the longest and shortest delivery times for all orders? (Tale difference of amx and min times across all orders (no group by requried since order id is completely unique)
+
+/*select (max(duration) - min(duration)) as shortest_diff from runner_orders 
+*/
+
+-- What is the successful delivery percentage for each runner? (Coun of deliveries where cancellation = 'N/A' / count of deliveries where cacncellation could be anything) group by runner_id
+-- Casting issues are bothersome
+
+SELECT
+    runner_id,
+    round((CAST(SUM(CASE WHEN cancellation = 'N/A' THEN 1 ELSE 0 END) AS DECIMAL(10, 2)) / COUNT(*)) * 100, 2) AS delivery_percentage
+FROM
+    runner_orders
+GROUP BY
+    runner_id;
+
+-----------------------------------------------------------------------------
+
+-- Ingredient optimization
+
+--What are the standard ingredients for each pizza?
+-- For each pizza, do a intersection operation on the toppings columns?
+
+-- Get all toppings separately
+With abc as (select pizza_id, CAST(TRIM(unnest(string_to_array(toppings, ','))) as INTEGER) as single_topping from pizza_recipes
+),
+
+-- Self join to get common distinct topppings
+def as (
+  select distinct a.single_topping from abc as a join abc as b on a.pizza_id != b.pizza_id and a.single_topping = b.single_topping
+  ),
+  
+ -- Get name for distinct toppings across pizzas
+ ghi as (
+   select d.single_topping as topping_id, g.topping_name as topping_name from def as d join pizza_toppings as g on d.single_topping = g.topping_id
+ )
+   
+select * from ghi
+
+-- What was the most commonly added extra? (Get customer orders where extra is != N/A. separate them ang group by extra topping id and then get it's name
+Similar to the first question
+
+with abc as (
+  select * from customer_orders where extras != '0'
+),
+
+def as (
+  select CAST(TRIM(unnest(string_to_array(extras, ','))) as INTEGER) as single_topping from abc
+),
+
+ghi as (select single_topping, count(*) from def group by single_topping order by count(*) desc limit 1
+)
+
+select d.single_topping as topping_id, g.topping_name as topping_name from ghi as d join pizza_toppings as g on d.single_topping = g.topping_id
+
+--What was the most common exclusion?
+
+with abc as (
+  select * from customer_orders where exclusions != '0'
+),
+
+def as (
+  select CAST(TRIM(unnest(string_to_array(exclusions, ','))) as INTEGER) as single_topping from abc
+),
+
+ghi as (select single_topping, count(*) from def group by single_topping order by count(*) desc limit 1
+)
+
+select d.single_topping as topping_id, g.topping_name as topping_name from ghi as d join pizza_toppings as g on d.single_topping = g.topping_id
