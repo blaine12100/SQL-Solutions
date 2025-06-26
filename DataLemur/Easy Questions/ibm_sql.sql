@@ -1,0 +1,1 @@
+SELECT employees.employee_id, SUM(case when queries.query_id is NULL THEN 1 else queries.query_id) FROM employees left join queries on employees.employee_id = queries.employee_id where queries.query_starttime >= '07/01/2023 00:00:00' and queries.query_starttime <= '09/30/2023 23:59:59' group by employees.employee_id
