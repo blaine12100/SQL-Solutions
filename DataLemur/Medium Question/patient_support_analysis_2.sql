@@ -1,0 +1,1 @@
+SELECT round((sum(case when call_category = 'n/a' or call_category = '' or call_category is null then 1 else 0 end)::NUMERIC / count(*)) * 100, 1) as uncategorised_call_pct FROM callers
